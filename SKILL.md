@@ -1,6 +1,6 @@
 ---
 name: pre-push-review
-description: Review, repair, and verify local code changes before they are pushed for team review. Use automatically as the final quality gate after Codex implements, modifies, fixes, refactors, or otherwise changes code, tests, migrations, configuration, or infrastructure, before coding work is considered complete. Also use when the user asks for a final code review, pre-push check, readiness assessment, self-review, quality gate, or verification before opening or updating a pull request.
+description: Review, repair, and verify local code changes before they are pushed for team review. Use automatically as the final quality gate after an implementation agent modifies, fixes, refactors, or otherwise changes code, tests, migrations, configuration, or infrastructure, before coding work is considered complete. Also use when the user asks for a final code review, pre-push check, readiness assessment, self-review, quality gate, or verification before opening or updating a pull request.
 ---
 
 # Pre-Push Review
@@ -17,6 +17,17 @@ Separate implementation from review. Keep the main agent responsible for repairs
 - Scale verification to the risk and scope of the change while preserving independent review and honest status reporting.
 - Allow the user to opt out explicitly, such as by saying `skip pre-push review`.
 - Do not trigger the full workflow for discussion, planning, read-only diagnosis, or review tasks that make no repository changes unless the user separately requests it.
+
+## Runtime portability
+
+- Treat this `SKILL.md` as the canonical vendor-neutral workflow. Do not require Codex-specific metadata or tool names.
+- Map repository inspection, diff reading, file editing, command execution, testing, and web research to the equivalent capabilities exposed by the current agent platform.
+- Prefer a fresh agent, subagent, forked context, isolated session, or equivalent mechanism for independent review when the platform provides one.
+- Prevent the independent reviewer from inheriting the implementation conversation. If strict context isolation is unavailable, use the fallback reporting rules instead of claiming independence.
+- Use the platform's available read-only browsing or search capability for material current uncertainties. If none is available, mark the affected conclusion as unverified.
+- Respect the platform's permission model, sandbox, approval requirements, and tool restrictions.
+- Preserve the workflow's role separation, evidence requirements, severity definitions, reconciliation protocol, and final statuses across platforms.
+- Treat platform-specific companion metadata as optional adapters. The workflow must remain fully understandable from this file alone.
 
 ## Operating rules
 
