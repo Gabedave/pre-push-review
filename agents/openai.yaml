@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pre-Push Review"
+  short_description: "Independent review, repair, and consensus gate"
+  default_prompt: "Use $pre-push-review to review and verify my current changes before I push them."
