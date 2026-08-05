@@ -1,6 +1,6 @@
 ---
 name: pre-push-review
-description: Review, repair, and verify local code changes before they are pushed for team review. Use when the user asks for a final code review, pre-push check, readiness assessment, self-review, quality gate, or verification of an implementation before opening or updating a pull request.
+description: Review, repair, and verify local code changes before they are pushed for team review. Use automatically as the final quality gate after Codex implements, modifies, fixes, refactors, or otherwise changes code, tests, migrations, configuration, or infrastructure, before coding work is considered complete. Also use when the user asks for a final code review, pre-push check, readiness assessment, self-review, quality gate, or verification before opening or updating a pull request.
 ---
 
 # Pre-Push Review
@@ -8,6 +8,15 @@ description: Review, repair, and verify local code changes before they are pushe
 Perform a rigorous final review of the repository's intended local changes. Make the change ready for human team review without claiming that software can be proven defect-free.
 
 Separate implementation from review. Keep the main agent responsible for repairs, use context-isolated reviewers for independent analysis, and require evidence-backed consensus on blocking findings.
+
+## Default invocation
+
+- Apply this skill automatically after any coding task that changes code, tests, migrations, configuration, or infrastructure.
+- Begin the full review only after the implementation reaches a candidate-final state. Do not interrupt each incremental edit with a full review cycle.
+- Complete the review before declaring the coding task finished or ready for handoff.
+- Scale verification to the risk and scope of the change while preserving independent review and honest status reporting.
+- Allow the user to opt out explicitly, such as by saying `skip pre-push review`.
+- Do not trigger the full workflow for discussion, planning, read-only diagnosis, or review tasks that make no repository changes unless the user separately requests it.
 
 ## Operating rules
 
