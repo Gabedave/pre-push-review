@@ -1,7 +1,7 @@
 interface:
   display_name: "Pre-Push Review"
-  short_description: "Independent review, repair, and consensus gate"
-  default_prompt: "Use $pre-push-review to review and verify my current changes before I push them."
+  short_description: "Independent approval contract and review gate"
+  default_prompt: "Use $pre-push-review to freeze approval criteria and review my current changes before I push them."
 
 policy:
   allow_implicit_invocation: true
