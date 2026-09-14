@@ -40,6 +40,10 @@ Separate implementation, approval authority, and review. Keep the main agent res
 - Never expose proprietary code, credentials, customer data, internal URLs, or secrets through external research.
 - Do not fabricate findings, tests, research, reviewer independence, consensus, or an internal review history.
 
+## Repository-defined extensions
+
+Treat applicable repository instructions as part of the review contract. They may require a repository-local verifier, architecture decision record, generated-artifact check, installed-package test, synthetic merge check, or another exact-candidate release gate. Run the repository-owned mechanism against the final candidate and report its result; do not replace it with a generic approximation or copy product-specific commands into this skill. A missing required decision record or release gate blocks readiness.
+
 ## Review economy and escalation
 
 - Use one independent reviewer by default for a candidate-final diff. A non-behavioral follow-up does not create a new candidate-final review obligation.
@@ -58,11 +62,12 @@ Separate implementation, approval authority, and review. Keep the main agent res
 
 1. Read applicable `AGENTS.md` files, repository documentation, and local instructions.
 2. Inspect repository status and the complete intended diff, including relevant staged, unstaged, and untracked files.
-3. Determine the review base from the user's request, pull-request target, merge base, or repository default branch.
+3. Determine the review base from the request, merge base, or repository default. When the work may create or update a pull request, independently resolve the default branch from its authoritative host and use it as the review and PR base unless the user, ticket, or governing release policy explicitly selects another target; a checkout, local branch name, linked PR, or earlier review is context rather than authority. Record the selected base and source of any override.
 4. Recover the intended behavior from authoritative sources that predate or are independent of the candidate: the original request, ticket, explicit acceptance criteria, applicable repository policy, public contracts, and review-base behavior. Do not derive approval criteria from tests, documentation, or implementation changed by the candidate.
 5. Identify the runtime, framework, dependency, and platform versions actually used by the repository.
-6. Separate target changes from unrelated work. Do not modify or include unrelated changes.
-7. If scope or intent cannot be determined safely, report the ambiguity instead of guessing.
+6. Compare the complete candidate commit set and diff with the selected base. Unexplained commits that exist only because the branch started from another target block readiness; remove unrelated history instead of retargeting it into the pull request.
+7. Separate target changes from unrelated work. Do not modify or include unrelated changes.
+8. If scope or intent cannot be determined safely, report the ambiguity instead of guessing.
 
 ## 2. Freeze the approval contract and candidate snapshot
 
@@ -84,6 +89,12 @@ Before judging the candidate, establish an approval contract that is independent
 8. Require the independent reviewer to verify contract provenance and completeness before evaluating the candidate, and to map every criterion to evidence and a result. The reviewer may add risk-derived invariants but may not weaken explicit requirements.
 
 Freeze the approval contract before the initial independent pass. Do not alter it during review except through the authorized material-change process or the documented, reviewer-confirmed non-material correction process above.
+
+For every criterion retain this evidence chain:
+
+`criterion -> changed seam -> focused evidence -> broad evidence -> result`
+
+Use `confirmed`, `partial`, `unverified`, or `failed`. Passing a nearby or broad suite does not confirm a criterion when the selected case mocks, skips, or otherwise fails to cross the changed seam.
 
 ### Freeze the candidate snapshot and classify risk
 
@@ -116,6 +127,16 @@ Defer slow broad suites, full builds, and redundant repository-wide checks until
 
 For concurrency or timing behavior, require deterministic coordination using barriers, controlled clocks, transaction hooks, or equivalent synchronization. Sleep-based timing, repeated retries, and stress runs may supplement deterministic evidence but must not be the sole proof of correctness.
 
+### Prove the changed boundary
+
+Derive material risks from the requirements, producers, and consumers before selecting checks. A repository verification map or large passing test count is an execution index, not the ceiling of the review.
+
+For critical stateful or provider-facing changes, record the real producer and data format, state changed by each step, the next consumer, and which collaborators are real or doubled. Follow writes to the subsequent read, retry, rescan, reconciliation, or cleanup. A refreshed object does not prove another snapshot is current, and a return value does not prove a collaborator had no side effects.
+
+Choose concrete failure combinations relevant to the change, such as partial success before an exception, a real adapter's wrapped error, a missing related record, late evidence after repair, or work performed while delivery is paused. Derive fixtures from the real writer or adapter, not only the reader under test, and preserve nearby success and no-side-effect controls.
+
+Use the smallest check that preserves the mechanism: a real state-changing collaborator, storage query, adapter, controlled interleaving, or exact command for an order-dependent failure. A stub that removes the mutation or dependency behavior under review cannot prove the criterion. Missing essential proof of the main acceptance behavior is blocking; do not demand a live provider or broad stress run when bounded local evidence proves the same risk.
+
 ## 4. Prepare an isolated review packet
 
 Create a minimal packet containing only:
@@ -123,9 +144,12 @@ Create a minimal packet containing only:
 - The original requirements or ticket verbatim when available
 - The approval-contract identity, criteria, authoritative sources, any authorized version history, and any documented non-material corrections
 - Applicable repository instructions
-- The snapshot identity, review base, and complete target diff
+- The authoritative default-branch lookup, selected review base, explicit override authority when applicable, complete branch-only commit set, unexplained-history assessment, snapshot identity, and complete target diff
 - The recorded risk level and its rationale
 - The high-risk invariant register when required
+- The criterion-to-changed-seam evidence mapping
+- For critical stateful or provider-facing changes, the producer/data-format, mutation, next-consumer, real-or-doubled collaborator, follow-up operation, and relevant failure-combination account
+- The repository decision-record assessment and any exact-candidate release gates
 - Relevant technical, product, compatibility, and operational constraints
 - Relevant tests and nearby code paths
 - Focused verification results and commands planned for final verification
@@ -147,7 +171,7 @@ Treat independent review as a separate execution context, not a role-play exerci
 1. Launch one fresh reviewer agent without inherited implementation conversation when agent isolation is available.
 2. Give the reviewer the isolated review packet and repository access.
 3. Keep the reviewer read-only during the initial pass.
-4. Ask the reviewer to verify the approval contract's provenance and completeness, then reconstruct intended behavior independently from that contract, its authoritative sources, and review-base evidence. Use candidate code and tests only to evaluate compliance.
+4. Ask the reviewer to verify the approval contract's provenance and completeness, the selected base and any override authority, the complete branch-only commit set, and the unexplained-history assessment. It must then reconstruct intended behavior independently from that contract, its authoritative sources, and review-base evidence. Use candidate code and tests only to evaluate compliance.
 5. Require every blocking finding to include an affected location, failure scenario, severity, evidence, and a concise remediation direction.
 6. Do not describe a same-context self-review as independent.
 
@@ -287,18 +311,20 @@ Allow documented minor and stylistic disagreements when neither agent identifies
 
 After reconciliation and repairs:
 
-1. Freeze and record the final snapshot identity. Confirm that it contains only intended changes and no secrets, sensitive data, generated noise, or unrelated files.
-2. Run the broadest verification proportionate to the final risk using the final snapshot. This is the normal point for affected suites, repository-wide tests, builds, linting, type checks, integration tests, and other expensive checks required by repository policy.
-3. Ask the original reviewer to inspect repairs to critical or major findings when it remains available.
-4. Launch a new context-free reviewer only when:
+1. Refresh the authoritative selected base when pull-request delivery is in scope. Recheck the candidate commit set and complete diff, then freeze and record the final snapshot identity. Confirm that it contains only intended changes and no secrets, sensitive data, generated noise, unrelated files, or unexplained branch history.
+2. Refresh every criterion's changed seam against the exact final snapshot. For critical stateful or provider-facing changes, also refresh the producer/data-format, mutation, next-consumer, collaborator, follow-up-operation, and failure-combination account.
+3. Run focused checks invalidated by the final delta and the broadest verification proportionate to the final risk using the exact final snapshot. This is the normal point for affected suites, repository-wide tests, builds, linting, type checks, integration tests, and other expensive checks required by repository policy.
+4. Finalize every criterion's focused evidence, broad evidence, and result from the completed exact-candidate checks. Missing essential final-boundary proof remains blocking.
+5. Ask the original reviewer to inspect repairs to critical or major findings when it remains available.
+6. Launch a new context-free reviewer only when:
    - a critical or major repair changed high-risk production behavior;
    - the review scope materially expanded;
    - the original reviewer still disputes the resolution; or
    - an independent adjudicator is needed.
-5. Do not launch a new reviewer solely because a minor finding was documented or a non-behavioral test, comment, formatting, or documentation change was made.
-6. When a new reviewer is required, give it the original isolated packet updated only with the final diff and fresh verification evidence. Do not give it the earlier debate or expected conclusion.
-7. Require the implementation agent to confirm that agreed corrections preserve intended behavior, but do not treat that confirmation as approval evidence. Require the applicable reviewer to confirm the final snapshot against the frozen approval contract. When no review-triggering repair occurred, use the completed reviewer report as confirmation that no known critical or major findings remain.
-8. If any command or tool mutates the candidate after final verification, compare the new diff with the final snapshot and rerun only the checks invalidated by that delta. Never claim verification for a snapshot that was not actually tested.
+7. Do not launch a new reviewer solely because a minor finding was documented or a non-behavioral test, comment, formatting, or documentation change was made.
+8. When a new reviewer is required, give it the original isolated packet updated only with the final diff and fresh verification evidence. Do not give it the earlier debate or expected conclusion.
+9. Require the implementation agent to confirm that agreed corrections preserve intended behavior, but do not treat that confirmation as approval evidence. Require the applicable reviewer to confirm the final snapshot against the frozen approval contract. When no review-triggering repair occurred, use the completed reviewer report as confirmation that no known critical or major findings remain.
+10. If any command or tool mutates the candidate after final verification, compare the new diff with the final snapshot and rerun only the checks invalidated by that delta. Never claim verification for a snapshot that was not actually tested.
 
 Achieve consensus only when blocking findings are fixed, resolved through accepted evidence, or authoritatively adjudicated, and required verification passes.
 Do not treat consensus as approval unless the final snapshot was evaluated against the same verified approval-contract version and every criterion has a supported result.
@@ -313,11 +339,11 @@ Summarize the files, diff, requirements, and risk areas reviewed.
 
 ### Approval contract
 
-Record the contract identity, each criterion and authoritative source, any authorized material changes, any reviewer-confirmed non-material corrections, and the criterion-to-evidence result mapping.
+Record the contract identity, each criterion and authoritative source, any authorized material changes, any reviewer-confirmed non-material corrections, and the final-snapshot criterion-to-changed-seam-to-focused-and-broad-evidence result mapping.
 
 ### Snapshot and risk
 
-Record the candidate and final snapshot identities, the risk level and rationale, the invariant-register status when applicable, the number of reviewer attempts, and the number of behavior-changing repair cycles.
+Record the authoritative default-branch lookup, selected base and any override authority, complete candidate commit set, unexplained-history assessment, candidate and final snapshot identities, risk level and rationale, invariant-register status when applicable, reviewer-attempt count, and behavior-changing repair-cycle count.
 
 ### Findings fixed
 
@@ -334,6 +360,14 @@ List checks executed and their outcomes. Identify checks that could not run and 
 ### External evidence
 
 List authoritative sources, applicable versions, and supported findings. Write `Not required` when repository evidence was sufficient.
+
+### Changed-boundary proof
+
+For critical stateful or provider-facing work, record the refreshed producer/data-format, mutation, next-consumer, collaborator, follow-up-operation, and failure-combination account. Connect it to the final criterion mapping and identify any essential proof that remains unverified. Write `Not required` for changes without such a boundary.
+
+### Decision records and repository gates
+
+Record the repository policy consulted, the required or skipped decision record with its path or reason, and every repository-defined exact-candidate gate with its result. Write `Not required` only when no applicable repository instruction requires an additional gate.
 
 ### Remaining findings and risks
 
